@@ -1,13 +1,12 @@
 import logging
 import aiohttp
 import asyncio
-import random
 import time
 from aiogram import Bot, Dispatcher, types
-from aiogram.types import ParseMode
 from sqlalchemy import create_engine, Column, Integer, String, Float, MetaData
 from sqlalchemy.orm import declarative_base, sessionmaker
 
+# Ваш токен телеграм-бота
 TOKEN = "6597488638:AAGViKDlZ7a2XeoMCHHUuL3kjbhsubrM8Jk"
 
 # Настройка журнала (логирование)
@@ -17,7 +16,7 @@ logger = logging.getLogger(__name__)
 # Глобальные переменные
 CITIES = ["Москва", "Берлин", "Лондон", "Нью-Йорк", "Токио"]
 WEATHER_CACHE = {}
-DATABASE_URL = r"sqlite:///C:\путь\к\файлу\weather_log.db"
+DATABASE_URL = "sqlite:///weather_log.db"
 
 # Создание базы данных
 Base = declarative_base()
@@ -34,44 +33,22 @@ class WeatherLog(Base):
     timestamp = Column(Integer, nullable=False)
 
 
-def generate_weather():
-    temperature = random.randint(-20, 35)  # Случайная температура от -20 до 35 градусов по Цельсию
-    wind_speed = random.uniform(0, 30)  # Случайная скорость ветра в км/ч
-    wind_directions = ["С", "СЗ", "З", "ЮЗ", "Ю", "ЮВ", "В", "СВ"]
-    wind_direction = random.choice(wind_directions)  # Случайное направление ветра
-    precipitation_types = ["Дождь", "Снег", "Мокрый снег", "Без осадков"]
-    precipitation = random.choice(precipitation_types)  # Случайный тип осадков
-
-    return {
-        "temperature": temperature,
-        "wind_speed": wind_speed,
-        "wind_direction": wind_direction,
-        "precipitation": precipitation,
-    }
-
-
 async def get_weather_data(city: str):
     if city in WEATHER_CACHE and (WEATHER_CACHE[city]["timestamp"] + 600) > time.time():
         return WEATHER_CACHE[city]["data"]
 
-
-async def get_weather_data(city):
-    base_url = "http://127.0.0.1:8000/weather/"
+    base_url = f"http://127.0.0.1:8000/weather/?city={city}"
     async with aiohttp.ClientSession() as session:
-        async with session.get(base_url, params={"city": city}) as response:
+        async with session.get(base_url) as response:
             if response.status == 200:
                 data = await response.json()
+                # Кеширование данных о погоде
+                WEATHER_CACHE[city] = {"data": data, "timestamp": time.time()}
                 return data
             else:
                 return None
 
-    # Генерация данных о погоде
-    weather_data = generate_weather()
-
-    # Кеширование данных о погоде
-    WEATHER_CACHE[city] = {"data": weather_data, "timestamp": time.time()}
-
-    return weather_data
+    return None
 
 
 async def on_start_command(message: types.Message):
