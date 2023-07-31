@@ -8,7 +8,6 @@ from aiogram.types import ParseMode
 from sqlalchemy import create_engine, Column, Integer, String, Float, MetaData
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-
 TOKEN = "6597488638:AAGViKDlZ7a2XeoMCHHUuL3kjbhsubrM8Jk"
 
 # Настройка журнала (логирование)
@@ -55,15 +54,16 @@ async def get_weather_data(city: str):
     if city in WEATHER_CACHE and (WEATHER_CACHE[city]["timestamp"] + 600) > time.time():
         return WEATHER_CACHE[city]["data"]
 
-    async def get_weather_data(city):
-        base_url = "http://127.0.0.1:8000/weather/"
-        async with aiohttp.ClientSession() as session:
-            async with session.get(base_url, params={"city": city}) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return data
-                else:
-                    return None
+
+async def get_weather_data(city):
+    base_url = "http://127.0.0.1:8000/weather/"
+    async with aiohttp.ClientSession() as session:
+        async with session.get(base_url, params={"city": city}) as response:
+            if response.status == 200:
+                data = await response.json()
+                return data
+            else:
+                return None
 
     # Генерация данных о погоде
     weather_data = generate_weather()
@@ -117,7 +117,7 @@ async def on_text_message(message: types.Message):
         await message.reply("Город не найден. Введите другой город.")
 
 
-свasync def on_unknown_command(message: types.Message):
+async def on_unknown_command(message: types.Message):
     await message.reply("Неизвестная команда. Введите /help для получения списка команд.")
 
 
